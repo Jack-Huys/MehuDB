@@ -2,6 +2,7 @@
 
 #include "MehuStatement.h"
 
+
 #include <iostream>
 #include <string>
 
@@ -13,30 +14,40 @@ enum MetaCommandResult
 	META_COMMAND_UNRECOGNIZED_COMMAND
 };
 
-// 处理结果枚举
+// 预处理结果枚举
 enum PrepareResult
 {
 	PREPARE_SUCCESS,
 	PREPARE_UNRECOGNIZED_STATEMENT
 };
 
+// 执行结果枚举
+enum ExecuteResult
+{
+	EXECUTE_SUCCESS,
+	EXECUTE_TABLE_FULL
+};
+
+class MehuStatement;
+class MehuTable;
 // 数据库类
 class MehuDB
 {
-
 public:
-	void start();
-	void print_prompt();
-
-	bool parse_meta_command(std::string &command);
-	MetaCommandResult do_meta_command(std::string &command);
-
-	PrepareResult prepare_statement(std::string &input_line, MehuStatement &statement);
-	bool parse_statement(std::string &input_line, MehuStatement &statement);
-	void execute_statement(MehuStatement &statement);
+	void Start();
 
 
 private:
 
+	void PrintPrompt();
+	bool ParseMetaCommand(std::string& command);
+	MetaCommandResult DoMetaCommand(std::string& command);
+
+	PrepareResult PrepareStatement(std::string& input_line, MehuStatement& statement);
+	bool ParseStatement(std::string& input_line, MehuStatement& statement);
+	void ExecuteStatement(MehuStatement& statement);
+
+	ExecuteResult ExecuteInsert(MehuStatement& statement, MehuTable& table);
+	ExecuteResult ExecuteSelect(MehuStatement& statement, MehuTable& table);
 
 };

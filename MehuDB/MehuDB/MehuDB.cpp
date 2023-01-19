@@ -1,16 +1,44 @@
 #include "MehuDB.h"
 
+#include "MehuTable.h"
 
-void MehuDB::print_prompt()
+void MehuDB::Start()
+{
+	while (true)
+	{
+		PrintPrompt();
+
+		std::string input_line;
+		std::getline(std::cin, input_line);
+
+		if (ParseMetaCommand(input_line))
+		{
+			continue;
+		}
+
+		MehuStatement statement;
+
+		// SQL解析
+		if (ParseStatement(input_line, statement))
+		{
+			continue;
+		}
+
+		// 执行SQL
+		ExecuteStatement(statement);
+	}
+}
+
+void MehuDB::PrintPrompt()
 {
 	std::cout << "MehuDB > ";
 }
 
-bool MehuDB::parse_meta_command(std::string &command)
+bool MehuDB::ParseMetaCommand(std::string &command)
 {
 	if (command[0] == '.')
 	{
-		switch (do_meta_command(command))
+		switch (DoMetaCommand(command))
 		{
 		case META_COMMAND_SUCCESS:
 			return true;
@@ -21,7 +49,7 @@ bool MehuDB::parse_meta_command(std::string &command)
 	}
 	return false;
 }
-MetaCommandResult MehuDB::do_meta_command(std::string &command)
+MetaCommandResult MehuDB::DoMetaCommand(std::string &command)
 {
 	if (command == ".exit")
 	{
@@ -34,7 +62,7 @@ MetaCommandResult MehuDB::do_meta_command(std::string &command)
 	}
 }
 
-PrepareResult MehuDB::prepare_statement(std::string &input_line, MehuStatement &statement)
+PrepareResult MehuDB::PrepareStatement(std::string &input_line, MehuStatement &statement)
 {
 	if (!input_line.compare(0, 6, "insert"))
 	{
@@ -52,9 +80,9 @@ PrepareResult MehuDB::prepare_statement(std::string &input_line, MehuStatement &
 	}
 }
 
-bool MehuDB::parse_statement(std::string &input_line, MehuStatement &statement)
+bool MehuDB::ParseStatement(std::string &input_line, MehuStatement &statement)
 {
-	switch (prepare_statement(input_line, statement))
+	switch (PrepareStatement(input_line, statement))
 	{
 	case PREPARE_SUCCESS:
 		return false;
@@ -65,7 +93,7 @@ bool MehuDB::parse_statement(std::string &input_line, MehuStatement &statement)
 	return false;
 }
 
-void MehuDB::execute_statement(MehuStatement &statement)
+void MehuDB::ExecuteStatement(MehuStatement &statement)
 {
 	switch (statement.GetStatementType())
 	{
@@ -78,31 +106,33 @@ void MehuDB::execute_statement(MehuStatement &statement)
 	}
 }
 
-
-
-void MehuDB::start()
+ExecuteResult MehuDB::ExecuteInsert(MehuStatement& statement, MehuTable& table)
 {
-	while (true)
+	if (table.m_nRowCount>= TABLE_MAX_ROWS)
 	{
-		print_prompt();
-
-		std::string input_line;
-		std::getline(std::cin, input_line);
-
-		if (parse_meta_command(input_line))
-		{
-			continue;
-		}
-
-		MehuStatement statement;
-
-		// SQL解析
-		if (parse_statement(input_line, statement))
-		{
-			continue;
-		}
-
-		// 执行SQL
-		execute_statement(statement);
+		std::cout << "Error: Table full." << std::endl;
+		return EXECUTE_TABLE_FULL;
 	}
+
+	void* page = table.RowSlot(table, table.m_nRowCount);
+	MehuRow _stuMehuRow;
+	_stuMehuRow.SerializeRow(statement.m_stuRow, page);
+	
+	table.m_nRowCount++;
+
+	return EXECUTE_SUCCESS;
 }
+
+ExecuteResult MehuDB::ExecuteSelect(MehuStatement& statement, MehuTable& table)
+{
+	for (uint32_t i = 0; i < table.m_nRowCount; i++)
+	{
+		MehuRow _row;
+		void* page = table.RowSlot(table, i);
+		//deserialize_row(page, _row);
+		std::cout << "(" << _row.m_nId << ", " << _row.m_szUsername << ", " << _row.m_szPassword << ")" << std::endl;
+	}
+
+	return EXECUTE_SUCCESS;
+}
+

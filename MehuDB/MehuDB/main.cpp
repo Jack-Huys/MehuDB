@@ -6,6 +6,6 @@
 int main(int argc, char const *argv[])
 {
 	MehuDB db;
-	db.start();
+	db.Start();
 	return 0;
 }

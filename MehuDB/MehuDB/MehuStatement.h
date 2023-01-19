@@ -1,4 +1,5 @@
 #pragma once
+#include "MehuRow.h"
 
 
 // SQL”Ôæ‰¿‡–Õ
@@ -19,6 +20,8 @@ public:
 	StatementType GetStatementType() const;
 	void SetStatementType(StatementType statementType);
 
+public:
+	MehuRow m_stuRow;
 
 private:
 	StatementType m_emStatementType;
